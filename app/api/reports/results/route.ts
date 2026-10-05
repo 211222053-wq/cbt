@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import * as XLSX from "xlsx";
+import { Workbook } from "exceljs";
 
 import { db } from "@/db/client";
 import { classes, exams, results, students, users } from "@/db/schema";
@@ -39,10 +39,30 @@ export async function GET(request: Request) {
     .limit(5000);
 
   if (format === "xlsx") {
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(rows);
-    XLSX.utils.book_append_sheet(wb, ws, "Results");
-    const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+    const workbook = new Workbook();
+    const worksheet = workbook.addWorksheet("Results");
+
+    worksheet.columns = [
+      { header: "Exam Code", key: "examCode", width: 16 },
+      { header: "Exam Title", key: "examTitle", width: 30 },
+      { header: "Class Name", key: "className", width: 20 },
+      { header: "Participant Number", key: "participantNumber", width: 20 },
+      { header: "Full Name", key: "fullName", width: 28 },
+      { header: "Score", key: "score", width: 12 },
+      { header: "Correct", key: "correct", width: 12 },
+      { header: "Wrong", key: "wrong", width: 12 },
+      { header: "Empty", key: "empty", width: 12 },
+      { header: "Passed", key: "passed", width: 12 },
+    ];
+
+    for (const row of rows) {
+      worksheet.addRow({
+        ...row,
+        passed: row.passed ? "YES" : "NO",
+      });
+    }
+
+    const buf = await workbook.xlsx.writeBuffer();
     return new NextResponse(buf, {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
