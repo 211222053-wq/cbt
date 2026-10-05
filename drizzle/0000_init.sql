@@ -1,0 +1,2 @@
+-- Initial schema for RyuExam CBT. Prefer drizzle-kit generate for exact SQL from schema.ts
+-- This file intentionally provides bootstrap migration for new environments.
